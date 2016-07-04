@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-# $Id: knflint,v 1.6 2016/07/04 09:52:59 ryo Exp $
+# $Id: knflint,v 1.7 2016/07/04 10:05:09 ryo Exp $
 #
 
 use strict;
@@ -26,16 +26,8 @@ my @reserved = qw(
 );
 
 my $RE_SYMBOL = qr/[_a-z]\w*/i;
-
-my $RE_PAREN;
-my $RE_BLOCK;
-
-$RE_PAREN = qr/\([^\(\)]*(?:(??{$RE_PAREN})[^\(\)]*)*\)/;		# match nested paren. e.g.: '()', '(foo())', '(foo(bar(baz, 1, 2, 3), 2), 3)', ...
-$RE_BLOCK = qr/\{[^\{\}]*(?:(??{$RE_BLOCK})[^\{\}]*)*\}/;		# match nested block. e.g.: '{}', '{ foo }', '{ foo { bar baz } text...}', ...
-
-#  more modern ($^V ge v5.10.0)
-# $RE_PAREN = qr/(\((?:[^()]++|(?-1))*+\))/;
-# $RE_BLOCK = qr/(\{(?:[^\{\}]++|(?-1))*+\})/;
+my $RE_PAREN = qr/(\((?:[^()]++|(?-1))*+\))/;
+my $RE_BLOCK = qr/(\{(?:[^\{\}]++|(?-1))*+\})/;
 
 
 
@@ -153,8 +145,7 @@ sub check_decl {
 
 	my $RE_ARGCLASS = qr/[_\w\*\,\s\(\)]+/;
 
-#	while ($body =~ /($RE_SYMBOL)\s*(${RE_PAREN})\s*((?:$RE_ARGCLASS\s*;)*)\s*($RE_BLOCK)/sg) {
-	while ($body =~ s/^(.*?($RE_SYMBOL)\s*(${RE_PAREN})\s*((?:$RE_ARGCLASS\s*;)*)\s*)//sg) {
+	while ($body =~ s/($RE_SYMBOL)\s*(${RE_PAREN})\s*((?:$RE_ARGCLASS\s*;)*)\s*($RE_BLOCK)//sg) {
 		my $funcname = $2;
 		my $ansi_variables = $3;
 		my $old_variables = $4;
@@ -183,6 +174,7 @@ sub check_decl {
 		$analyzed->{$funcname}->{oldarg} = $old_variables;
 		$analyzed->{$funcname}->{block} = $block;
 
+#print Dumper($analyzed);
 		if ((defined $old_variables) && ($old_variables !~ m/^\s*$/)) {
 			printf "%s:%d: K&R type declaration\n", $r->path(), $lineno;
 		}
