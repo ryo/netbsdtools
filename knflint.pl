@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-# $Id: knflint,v 1.7 2016/07/04 10:05:09 ryo Exp $
+# $Id: knflint,v 1.8 2016/07/04 10:44:58 ryo Exp $
 #
 
 use strict;
@@ -72,7 +72,9 @@ sub check_column {
 			printf "%s:%d: unnecessary spaces at the end of line\n", $r->path(), $lineno;
 		}
 		if (length(detab($_)) > 80) {
-			printf "%s:%d: over 80 columns\n", $r->path(), $lineno;
+			if (!m/^__KERNEL_RCSID/) {
+				printf "%s:%d: over 80 columns\n", $r->path(), $lineno;
+			}
 		}
 
 	} continue {
