@@ -1,6 +1,6 @@
-#!/usr/bin/env perl
+#!/usr/local/bin/perl
 #
-# $Id: knflint,v 1.4 2011/01/09 23:37:44 ryo Exp $
+# $Id: knflint,v 1.6 2016/07/04 09:52:59 ryo Exp $
 #
 
 use strict;
@@ -75,6 +75,9 @@ sub check_column {
 		chop;
 		if (m/ \t/) {
 			printf "%s:%d: mixed space and tab\n", $r->path(), $lineno;
+		}
+		if (m/\s+$/) {
+			printf "%s:%d: unnecessary spaces at the end of line\n", $r->path(), $lineno;
 		}
 		if (length(detab($_)) > 80) {
 			printf "%s:%d: over 80 columns\n", $r->path(), $lineno;
