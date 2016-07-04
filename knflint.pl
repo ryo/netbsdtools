@@ -1,8 +1,9 @@
 #!/usr/local/bin/perl
 #
-# $Id: knflint,v 1.8 2016/07/04 10:44:58 ryo Exp $
+# $Id: knflint,v 1.9 2016/07/04 19:37:38 ryo Exp $
 #
 
+require 5.10.0;	# for nested regexp
 use strict;
 use warnings;
 use Getopt::Std;
@@ -145,38 +146,19 @@ sub check_decl {
 	my $analyzed;
 	my $offset = 0;
 
-	my $RE_ARGCLASS = qr/[_\w\*\,\s\(\)]+/;
+	my $RE_ARGCLASS = qr/[\[\]_\w\*\,\s\(\)]+/;
 
-	while ($body =~ s/($RE_SYMBOL)\s*(${RE_PAREN})\s*((?:$RE_ARGCLASS\s*;)*)\s*($RE_BLOCK)//sg) {
-		my $funcname = $2;
+	while ($body =~ m/($RE_SYMBOL)\s*(${RE_PAREN})\s*((?:$RE_ARGCLASS\s*;\s*)*)\s*\{/sg) {
+		my $funcname = $1;
 		my $ansi_variables = $3;
 		my $old_variables = $4;
 
 		my $lineno = 1 + $r->offset2lineno($offset + $-[2]);
-		$offset += $-[1] + $+[1];
-
-		my $block;
-		if ($body =~ s/^($RE_BLOCK)//sg) {
-			$block = $1;
-			$offset += $-[1] + $+[0];
-		}
-
-		if (exists $opts{D}) {
-			print "$funcname\n";
-
-			print "<DECL funcname=${funcname}() line=$lineno>\n";
-			print "<DECL ANSI_VAR='$ansi_variables'>\n";
-			print "<DECL K&R_VAR='$old_variables'>\n" if (defined $old_variables);
-			print "<BLOCK funcname=$funcname>$block</BLOCK>\n" if (defined $block);
-			print "==============================\n\n\n\n\n\n\n\n\n\n\n\n\n";
-		}
 
 		$analyzed->{$funcname}->{lineno} = $lineno;
 		$analyzed->{$funcname}->{arg} = $ansi_variables;
 		$analyzed->{$funcname}->{oldarg} = $old_variables;
-		$analyzed->{$funcname}->{block} = $block;
 
-#print Dumper($analyzed);
 		if ((defined $old_variables) && ($old_variables !~ m/^\s*$/)) {
 			printf "%s:%d: K&R type declaration\n", $r->path(), $lineno;
 		}
