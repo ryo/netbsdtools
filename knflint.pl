@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-# $Id: knflint,v 1.12 2017/07/06 06:28:41 ryo Exp $
+# $Id: knflint,v 1.13 2017/07/06 06:39:37 ryo Exp $
 #
 
 require 5.10.0;	# for nested regexp
@@ -80,7 +80,10 @@ sub check_column {
 		}
 
 		if (length(detab($_)) > 80) {
-			if (!m/^__KERNEL_RCSID/) {
+			if (!m/^__KERNEL_RCSID/ &&
+			    !m/\$NetBSD:.*\$/ &&
+			    !m/\$FreeBSD:.*\$/ &&
+			    !m/\$OpenBSD:.*\$/) {
 				printf "%s:%d: over 80 columns\n", $r->path(), $lineno;
 			}
 		}
