@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-# $Id: knflint,v 1.13 2017/07/06 06:39:37 ryo Exp $
+# $Id: knflint,v 1.14 2017/07/06 11:19:00 ryo Exp $
 #
 
 require 5.10.0;	# for nested regexp
@@ -56,6 +56,8 @@ sub knflint {
 #	check_enum($r);
 	check_struct($r);
 
+	check_parentheses($r);
+
 	check_decl($r);
 }
 
@@ -100,6 +102,7 @@ sub detab {
 	}
 	$line;
 }
+
 
 sub check_comment {
 	my $r = shift;
@@ -152,6 +155,28 @@ sub check_lastcomma_main {
 
 	my $lineno = $r->offset2lineno($offset);
 	printf "%s:%d: No comma on the last element\n", $r->path(), $lineno + 1;
+	$match;
+}
+
+
+sub check_parentheses {
+	my $r = shift;
+	my $body = $r->body;
+
+	$body =~ s#\breturn\s*([^;]*);#check_parentheses_main($r, $1)#seg;
+}
+
+sub check_parentheses_main {
+	my $r = shift;
+	my $value = shift;
+	my $match = $&;
+
+	my $offset = $-[0];
+	my $lineno = $r->offset2lineno($offset);
+	if ($value =~ m/^\(\s*[\+\-]?\s*\w+\s*\)\s*$/) {
+		printf "%s:%d: No parentheses are needed around the return value\n", $r->path(), $lineno + 1;
+	}
+
 	$match;
 }
 
