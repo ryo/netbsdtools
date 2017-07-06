@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-# $Id: knflint,v 1.9 2016/07/04 19:37:38 ryo Exp $
+# $Id: knflint,v 1.10 2017/07/06 05:40:19 ryo Exp $
 #
 
 require 5.10.0;	# for nested regexp
@@ -49,6 +49,7 @@ sub knflint {
 	$r->read($file) or return;
 
 	check_column($r);
+	check_lastcomma($r);
 #	check_comment($r);	# check and eliminate comment with whitespace; destructive update
 #	check_macro($r);	# eliminate preprocessor macro; destructive update
 
@@ -125,8 +126,26 @@ sub check_comment_main {
 
 	die "XXX: not supported yet\n";
 #	print "<COMMENT $offset>$comment</COMMENT>\n\n";
-
 }
+
+
+sub check_lastcomma {
+	my $r = shift;
+	my $body = $r->body;
+
+	$body =~ s#(,\s*\})#check_lastcomma_main($r, $1)#seg;
+}
+
+sub check_lastcomma_main {
+	my $r = shift;
+	my $match = shift;
+	my $offset = $-[0];
+
+	my $lineno = $r->offset2lineno($offset);
+	printf "%s:%d: No comma on the last element\n", $r->path(), $lineno + 1;
+	$match;
+}
+
 
 sub check_macro {
 	my $r = shift;
