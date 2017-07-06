@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-# $Id: knflint,v 1.10 2017/07/06 05:40:19 ryo Exp $
+# $Id: knflint,v 1.11 2017/07/06 06:17:58 ryo Exp $
 #
 
 require 5.10.0;	# for nested regexp
@@ -54,7 +54,7 @@ sub knflint {
 #	check_macro($r);	# eliminate preprocessor macro; destructive update
 
 #	check_enum($r);
-#	check_struct($r);
+	check_struct($r);
 
 	check_decl($r);
 }
@@ -143,6 +143,33 @@ sub check_lastcomma_main {
 
 	my $lineno = $r->offset2lineno($offset);
 	printf "%s:%d: No comma on the last element\n", $r->path(), $lineno + 1;
+	$match;
+}
+
+
+sub check_struct {
+	my $r = shift;
+	my $body = $r->body;
+
+	$body =~ s#\b(struct\s+\w+\s*\{)(.*?)(\})#check_struct_main($r, $1, $2, $3)#seg;
+}
+
+sub check_struct_main {
+	my $r = shift;
+	my $struct_begin = shift;
+	my $struct_body = shift;
+	my $struct_end = shift;
+	my $match = join('<>', $struct_begin, $struct_body, $struct_end);
+
+	my $offset = $-[0];
+
+	if (($struct_body =~ m/\bstruct\s*\{/) ||
+	    ($struct_body =~ m/\bstruct\s+\w+\s*\{/)) {
+		$offset += length($struct_begin) + $-[0] + 1;
+
+		my $lineno = $r->offset2lineno($offset);
+		printf "%s:%d: nested struct\n", $r->path(), $lineno + 1;
+	}
 	$match;
 }
 
