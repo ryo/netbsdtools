@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-# $Id: knflint,v 1.11 2017/07/06 06:17:58 ryo Exp $
+# $Id: knflint,v 1.12 2017/07/06 06:28:41 ryo Exp $
 #
 
 require 5.10.0;	# for nested regexp
@@ -73,6 +73,12 @@ sub check_column {
 		if (m/\s+$/) {
 			printf "%s:%d: unnecessary spaces at the end of line\n", $r->path(), $lineno;
 		}
+		if (m/^ {8}/ || m/\t {8}/) {
+			printf "%s:%d: continuous space. use tab\n", $r->path(), $lineno;
+		} elsif (m/^ {5,7}/ || m/\t {5,7}/) {
+			printf "%s:%d: Illegal length of space. Second level indents are four spaces\n", $r->path(), $lineno;
+		}
+
 		if (length(detab($_)) > 80) {
 			if (!m/^__KERNEL_RCSID/) {
 				printf "%s:%d: over 80 columns\n", $r->path(), $lineno;
