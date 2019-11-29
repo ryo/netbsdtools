@@ -1,6 +1,6 @@
-#!/usr/local/bin/perl
+#!/usr/bin/env perl
 #
-# $Id: knflint,v 1.14 2017/07/06 11:19:00 ryo Exp $
+# $Id: knflint,v 1.19 2019/11/29 06:00:25 ryo Exp $
 #
 
 require 5.10.0;	# for nested regexp
@@ -53,6 +53,8 @@ sub knflint {
 #	check_comment($r);	# check and eliminate comment with whitespace; destructive update
 #	check_macro($r);	# eliminate preprocessor macro; destructive update
 
+	check_space_eafter($r);
+
 #	check_enum($r);
 	check_struct($r);
 
@@ -86,7 +88,9 @@ sub check_column {
 			    !m/\$NetBSD:.*\$/ &&
 			    !m/\$FreeBSD:.*\$/ &&
 			    !m/\$OpenBSD:.*\$/) {
-				printf "%s:%d: over 80 columns\n", $r->path(), $lineno;
+
+				my $len = length(detab($_));
+				printf "%s:%d: over 80 columns (%d columns)\n", $r->path(), $lineno, $len;
 			}
 		}
 
@@ -216,6 +220,28 @@ sub check_macro {
 	my $body = $r->body;
 	$r->body($body);
 }
+
+sub check_space_eafter {
+	my $r = shift;
+
+	my $body = $r->body;
+
+	my @word_with_space = qw(case do elif else enum for goto if return struct switch union while);
+
+	my @lines = $r->lines;
+	my $lineno = 1;
+	for (@lines) {
+		for my $w (@word_with_space) {
+			if (m/\b\Q$w\E[\(\{]/) {
+				printf "%s:%d: need space after '%s'\n", $r->path(), $lineno, $w;
+			}
+		}
+
+	} continue {
+		$lineno++;
+	}
+}
+
 
 sub check_decl {
 	my $r = shift;
